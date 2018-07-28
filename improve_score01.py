@@ -208,64 +208,26 @@ import xgboost as xgb
 import lightgbm as lgb
 
 lasso = make_pipeline(RobustScaler(), Lasso(alpha =0.0005, random_state=1))
-#treinamos o lasso
-# lasso.fit(train.values, y_train)
-# lasso_predictions = np.expm1(lasso.predict(test.values))
-# lasso_output = 'Id,SalePrice\n'
-# for i in range(0,len(lasso_predictions)):
-#     lasso_output = lasso_output + str(testID[i])+ ','+str(lasso_predictions[i])+'\n'
-# lasso_file = open('lasso_submission.csv','w')
-# lasso_file.write(lasso_output)
-# lasso_file.close()
 
-# elastic = make_pipeline(RobustScaler(), ElasticNet(alpha=0.005, l1_ratio=.9, random_state=3))
-# elastic.fit(train.values, y_train)
-# elastic_predictions = np.expm1(elastic.predict(test.values))
-# elastic_output = 'Id,SalePrice\n'
-# for i in range(0,len(elastic_predictions)):
-#     elastic_output = elastic_output + str(testID[i])+ ','+str(elastic_predictions[i])+'\n'
-# elastic_file = open('elastic_submission.csv','w')
-# elastic_file.write(elastic_output)
-# elastic_file.close()
-
-
-# ker_ridge = KernelRidge(alpha=0.6, kernel='polynomial', degree=2, coef0=2.5)
-# ker_ridge.fit(train.values, y_train)
-# ker_ridge_predictions = np.expm1(ker_ridge.predict(test.values))
-# ker_ridge_output = 'Id,SalePrice\n'
-# for i in range(0,len(ker_ridge_predictions)):
-#     ker_ridge_output = ker_ridge_output + str(testID[i])+ ','+str(ker_ridge_predictions[i])+'\n'
-# ker_ridge_file = open('ker_ridge_submission.csv','w')
-# ker_ridge_file.write(ker_ridge_output)
-# ker_ridge_file.close()
-
-
-# gboost = GradientBoostingRegressor(n_estimators=3000, learning_rate=0.05, max_depth=4, max_features='sqrt', min_samples_leaf=15, min_samples_split=10, loss='huber', random_state =5)
-# gboost.fit(train.values, y_train)
-# gboost_predictions = np.expm1(gboost.predict(test.values))
-# gboost_output = 'Id,SalePrice\n'
-# for i in range(0,len(gboost_predictions)):
-#     gboost_output = gboost_output + str(testID[i])+ ','+str(gboost_predictions[i])+'\n'
-# gboost_file = open('gboost_submission.csv','w')
-# gboost_file.write(gboost_output)
-# gboost_file.close()
-
+# Aproveitamos as instanciacoes
+elastic = make_pipeline(RobustScaler(), ElasticNet(alpha=0.005, l1_ratio=.9, random_state=3))
+ker_ridge = KernelRidge(alpha=0.6, kernel='polynomial', degree=2, coef0=2.5)
+gboost = GradientBoostingRegressor(n_estimators=3000, learning_rate=0.05, max_depth=4, max_features='sqrt', min_samples_leaf=15, min_samples_split=10, loss='huber', random_state =5)
 xgboost = xgb.XGBRegressor(colsample_bytree=0.4603, gamma=0.0468, learning_rate=0.05, max_depth=3, min_child_weight=1.7817, n_estimators=2200,reg_alpha=0.4640, reg_lambda=0.8571,subsample=0.5213, silent=1,random_state =7, nthread = -1)
-xgboost.fit(train.values, y_train)
-xgboost_predictions = np.expm1(xgboost.predict(test.values))
-xgboost_output = 'Id,SalePrice\n'
-for i in range(0,len(xgboost_predictions)):
-    xgboost_output = xgboost_output + str(testID[i])+ ','+str(xgboost_predictions[i])+'\n'
-xgboost_file = open('xgboost_submission.csv','w')
-xgboost_file.write(xgboost_output)
-xgboost_file.close()
-
 lgbm = model_lgb = lgb.LGBMRegressor(objective='regression',num_leaves=5,learning_rate=0.05, n_estimators=720,max_bin = 55, bagging_fraction = 0.8,bagging_freq = 5, feature_fraction = 0.2319,feature_fraction_seed=9, bagging_seed=9,min_data_in_leaf =6, min_sum_hessian_in_leaf = 11)
-lgbm.fit(train.values, y_train)
-lgbm_predictions = np.expm1(lgbm.predict(test.values))
-lgbm_output = 'Id,SalePrice\n'
-for i in range(0,len(lgbm_predictions)):
-    lgbm_output = lgbm_output + str(testID[i])+ ','+str(lgbm_predictions[i])+'\n'
-lgbm_file = open('lgbm_submission.csv','w')
-lgbm_file.write(lgbm_output)
-lgbm_file.close()
+
+from utils import AveragingModels
+
+#Improve1
+#avg_model = AveragingModels((lasso, lgbm, gboost,xgboost))
+
+#Improve2
+avg_model = AveragingModels((lasso, lgbm, gboost,xgboost, ker_ridge, elastic))
+avg_model.fit(train.values, y_train)
+avg_model_predictions = np.expm1(avg_model.predict(test.values))
+avg_model_output = 'Id,SalePrice\n'
+for i in range(0,len(avg_model_predictions)):
+    avg_model_output = avg_model_output + str(testID[i])+ ','+str(avg_model_predictions[i])+'\n'
+avg_model_file = open('avg_model_submission_2.csv','w')
+avg_model_file.write(avg_model_output)
+avg_model_file.close()
